@@ -1,0 +1,121 @@
+<!--
+%\VignetteIndexEntry{Getting started with jmpread}
+%\VignetteEngine{knitr::knitr}
+%\VignetteEncoding{UTF-8}
+-->
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Getting started with jmpread</title>
+<style>body{max-width:760px;margin:3em auto;font:18px/1.6 system-ui;padding:0 1em;color:#193242}pre{background:#f1f5f8;padding:1em;overflow:auto}h1,h2{line-height:1.2}</style>
+<h1>Getting started with jmpread</h1>
+<p>This package imports common JMP table encodings using native R. Python and JMP are not runtime dependencies. Compatibility is limited to the documented encodings.</p>
+<h2>Read the bundled table</h2>
+<div class="chunk" id="setup"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">library</span><span class="hl def">(jmpread)</span>
+<span class="hl def">path</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">system.file</span><span class="hl def">(</span><span class="hl sng">&quot;extdata&quot;</span><span class="hl def">,</span> <span class="hl sng">&quot;jmpreader_jl&quot;</span><span class="hl def">,</span> <span class="hl sng">&quot;example1&quot;</span><span class="hl def">,</span>
+                    <span class="hl sng">&quot;example1.jmp&quot;</span><span class="hl def">,</span> <span class="hl kwc">package</span> <span class="hl def">=</span> <span class="hl sng">&quot;jmpread&quot;</span><span class="hl def">)</span>
+<span class="hl def">data</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">read_jmp</span><span class="hl def">(path)</span>
+<span class="hl def">data[,</span> <span class="hl kwd">c</span><span class="hl def">(</span><span class="hl sng">&quot;ints&quot;</span><span class="hl def">,</span> <span class="hl sng">&quot;floats&quot;</span><span class="hl def">)]</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##   ints floats
+## 1    1   11.1
+## 2    2   22.2
+## 3    3   33.3
+## 4    4   44.4
+</pre></div>
+</div></div>
+<h2>Choose columns</h2>
+<p>Column names and order follow the original table. select and exclude accept exact names.</p>
+<div class="chunk" id="select"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">read_jmp</span><span class="hl def">(path,</span> <span class="hl kwc">select</span> <span class="hl def">=</span> <span class="hl kwd">c</span><span class="hl def">(</span><span class="hl sng">&quot;floats&quot;</span><span class="hl def">,</span> <span class="hl sng">&quot;ints&quot;</span><span class="hl def">),</span> <span class="hl kwc">metadata</span> <span class="hl def">=</span> <span class="hl num">FALSE</span><span class="hl def">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##   ints floats
+## 1    1   11.1
+## 2    2   22.2
+## 3    3   33.3
+## 4    4   44.4
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl def">data[[</span><span class="hl sng">&quot;char utf8&quot;</span><span class="hl def">]]</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] "ꙮꙮꙮ"    "🚴💨"   "jäääär" "辛口"  
+## attr(,"jmp_metadata")
+## attr(,"jmp_metadata")$name
+## [1] "char utf8"
+## 
+## attr(,"jmp_metadata")$type_bytes
+## [1] 2 2 0 0 0 0
+## 
+## attr(,"jmp_metadata")$storage
+## [1] "character"
+## 
+## attr(,"jmp_metadata")$compressed
+## [1] FALSE
+## 
+## attr(,"jmp_metadata")$raw_metadata
+##   [1] 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 00 20 00 00 00 00 00 02 00 00
+##  [26] 00 00 00 0b 00 02 00 00 00 40 00 17 00 02 00 00 00 02 00 20 00 02 00 00 00
+##  [51] 32 00 2a 00 00 00 00 00 00 00 01 0a 00 00 00 09 08 0a 06 ea 99 ae ea 99 ae
+##  [76] ea 99 ae f0 9f 9a b4 f0 9f 92 a8 6a c3 a4 c3 a4 c3 a4 c3 a4 72 e8 be 9b e5
+## [101] 8f a3
+## 
+## attr(,"jmp_metadata")$display_width
+## [1] 50
+</pre></div>
+</div></div>
+<h2>Keep dates and missing values</h2>
+<p>JMP date and time displays store seconds since 1904-01-01. POSIXct preserves time of day even for date-looking values. Durations use difftime. Missing numeric values become NA; empty strings remain empty strings.</p>
+<div class="chunk" id="temporal"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl def">data</span><span class="hl opt">$</span><span class="hl def">date</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] "2024-01-13 00:00:00 UTC" "2024-01-14 08:49:08 UTC"
+## [3] NA                        "2032-02-12 00:00:00 UTC"
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl def">data</span><span class="hl opt">$</span><span class="hl def">duration</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## Time differences in secs
+## [1] 2322  364  229    0
+## attr(,"jmp_metadata")
+## attr(,"jmp_metadata")$name
+## [1] "duration"
+## 
+## attr(,"jmp_metadata")$type_bytes
+## [1]   1   0  12 133 133   8
+## 
+## attr(,"jmp_metadata")$storage
+## [1] "duration"
+## 
+## attr(,"jmp_metadata")$compressed
+## [1] FALSE
+## 
+## attr(,"jmp_metadata")$raw_metadata
+##  [1] 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 00 20 00 00 00 00 00 02 00
+## [26] 00 00 00 00 13 00 02 00 00 00 00 00 17 00 02 00 00 00 00 00 20 00 02 00 00
+## [51] 00 53 00 00 00 00 00 00 24 a2 40 00 00 00 00 00 c0 76 40 00 00 00 00 00 a0
+## [76] 6c 40 00 00 00 00 00 00 00 00
+## 
+## attr(,"jmp_metadata")$display_width
+## [1] 83
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">read_jmp</span><span class="hl def">(path,</span> <span class="hl kwc">select</span> <span class="hl def">=</span> <span class="hl sng">&quot;date&quot;</span><span class="hl def">,</span> <span class="hl kwc">temporal</span> <span class="hl def">=</span> <span class="hl sng">&quot;raw&quot;</span><span class="hl def">,</span> <span class="hl kwc">metadata</span> <span class="hl def">=</span> <span class="hl num">FALSE</span><span class="hl def">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##         date
+## 1 3787948800
+## 2 3788066948
+## 3         NA
+## 4 4043001600
+</pre></div>
+</div></div>
+<h2>Inspect source metadata</h2>
+<div class="chunk" id="metadata"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">attr</span><span class="hl def">(data,</span> <span class="hl sng">&quot;jmp_metadata&quot;</span><span class="hl def">)</span><span class="hl opt">$</span><span class="hl def">build</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] "Jul 23 2023, 19:09:15, Release, JMP, Version 17.2.0"
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">attr</span><span class="hl def">(data[[</span><span class="hl sng">&quot;date&quot;</span><span class="hl def">]],</span> <span class="hl sng">&quot;jmp_metadata&quot;</span><span class="hl def">)</span><span class="hl opt">$</span><span class="hl def">storage</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] "date"
+</pre></div>
+</div></div>
+<p>Raw post-header blocks are retained, including payload bytes, so metadata can increase memory use. Notes, units, labels and formulas are not exposed as structured fields yet. Formulas are never executed. Row-state columns are lists of raw bytes.</p>
+<h2>Use your own files</h2>
+<p>Use a table you created yourself or have documented permission to use.</p>
+<pre>my_table &lt;- read_jmp("my-data.jmp")
+summary(my_table)</pre>
+<h2>Help and support</h2>
+<p>Use <code>?read_jmp</code> for all options and supported encodings. Report problems through the <a href="https://github.com/JosephHill04/jmpread/issues">issue tracker</a>, including your R version, package version and a small example you have permission to share.</p>
+</html>
